@@ -15,6 +15,15 @@ function solid_area(x,y,w,h)
 	return solid(x+w,y) or solid(x+w,y+h) or solid(x,y) or solid(x,y+h)
 end
 
+--function get_block_coordinates(x,y)
+	--return {x=x-x%8,y=y-y%8}
+--end
+
+function get_block_y(y)
+	return y-y%8
+	--return y
+end
+
 -- player keyboard commands
 function player_controls(p)
 	local spd = 1
@@ -47,14 +56,16 @@ end
 
 -- move the player, an npc or an enemy
 function move_actor(act, is_solid)
-	
+
+	local b_y = get_block_y(act.y+act.dy+8)
+
 	if(act.dy >= 0 and act.dy <= 0.3 and act.is_jumping) then
 		act.is_jumping = false
 		act.is_falling = true
 	end
 
 	-- gravity
-	if(act.is_falling or act.is_jumping) then
+	if((act.is_falling or act.is_jumping) and act.dy < 3) then
 		act.dy += 0.3
 	end
 
@@ -67,19 +78,16 @@ function move_actor(act, is_solid)
 
 		if not solid_area(act.x,act.y+act.dy,act.w,act.h) then
 			act.y += act.dy
+			if(act.is_jumping == false and act.dy > 0) then
+				act.is_falling = true
+			end
 		else
 			act.dy = 0
 			if(act.is_falling) then
 				act.is_falling = false
 
-				-- temporary fix for ground blocks only. will need to use the solid block's y value later
-				act.y = 112
-
-				-- buggy. player sometimes moves through floor
-				--act.y = act.y+act.dy - ((act.y+act.dy) % 8) + 8
-
-				--[[else
-					act.is_falling = true]]
+				-- if falling, set the actor's y value to be just above the block
+				act.y = b_y - act.h - 1
 			end
 		end
 	else
