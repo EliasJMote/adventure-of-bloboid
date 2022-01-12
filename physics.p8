@@ -40,10 +40,12 @@ function player_controls(p)
 	end
 
 	-- player jump
-	if(btnp(5) and not p.is_jumping and not p.is_falling) then
+	--if(btnp(5) and not p.is_jumping and not p.is_falling) then
+	if(btnp(5) and p.is_on_ground) then
 		p.dy = -3.75
 		p.is_jumping = true
 		p.is_falling = false
+		p.is_on_ground = false
 	end
 
 	if(p.is_jumping and not btn(5)) then
@@ -57,16 +59,17 @@ end
 -- move the player, an npc or an enemy
 function move_actor(act, is_solid)
 
-	local b_y = get_block_y(act.y+act.dy+8)
+	-- check if the actor is on the ground
+	if not solid_area(act.x,act.y+act.dy+1,act.w,act.h) then
+		act.is_on_ground = false
+		--act.is_falling = true
+	elseif(act.dy >= 0) then
+		act.is_on_ground = true
+	end
 
 	if(act.dy >= 0 and act.dy <= 0.3 and act.is_jumping) then
 		act.is_jumping = false
 		act.is_falling = true
-	end
-
-	-- gravity
-	if((act.is_falling or act.is_jumping) and act.dy < 3) then
-		act.dy += 0.3
 	end
 
 	if(is_solid) then
@@ -78,21 +81,26 @@ function move_actor(act, is_solid)
 
 		if not solid_area(act.x,act.y+act.dy,act.w,act.h) then
 			act.y += act.dy
-			if(act.is_jumping == false and act.dy > 0) then
-				act.is_falling = true
-			end
 		else
-			act.dy = 0
 			if(act.is_falling) then
 				act.is_falling = false
 
-				-- if falling, set the actor's y value to be just above the block
-				act.y = b_y - act.h - 1
+				-- if falling, move the actor to the top of the block
+				local block_y = get_block_y(act.y+act.dy+8)
+				act.y = block_y - act.h - 1
 			end
+
+			-- the player is on a solid block, so fall speed is set to 0
+			act.dy = 0
 		end
 	else
 		act.x += act.dx
 		act.y += act.dy
+	end
+
+	-- gravity
+	if((act.is_falling or act.is_jumping or not act.is_on_ground) and act.dy < 3) then
+		act.dy += 0.3
 	end
 
 	return act

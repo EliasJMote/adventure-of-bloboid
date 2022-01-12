@@ -15,19 +15,15 @@ function _init()
 
 	player = {}
 	player.x = 16
-	
+	player.y = 112
 	player.w = 7
 	player.h = 7
 	player.dx = 0
 	player.dy = 0
 	player.is_jumping = false
-	if(debug_mode) then
-		player.is_falling = true
-		player.y = 48
-	else
-		player.is_falling = false
-		player.y = 112
-	end
+	player.is_on_ground = true
+	player.is_falling = false
+	
 	player.dir = "right"
 
 	cam = {x=0,y=0}
@@ -44,17 +40,7 @@ function _init()
 
 	fun = 0
 
-	-- generate blocks
-	blocks = {}
-	for j=0,16 do
-		for i=0,128 do
-			if(solid(i*8,j*8)) then
-				add(blocks,{x=i*8,y=j*8,w=8,h=8})
-			end
-		end
-	end
-
-	version = "0.1.1"
+	version = "0.1.2"
 end
 
 function _update()
@@ -69,8 +55,6 @@ function _update()
 
 	elseif(state == "game") then
 
-		--b_y = get_block_y(player.y+player.dy+8)
-
 		-- update the camera
 		cam = {x=player.x-64,y=player.y-64}
 
@@ -80,14 +64,14 @@ function _update()
 			cam.x = 128*8-128
 		end
 
-		if(debug_mode and btnp(4) or not debug_mode) then
+		--if(debug_mode and btnp(4) or not debug_mode) then
 
 			player = player_controls(player)
 
 			player = move_actor(player, true)
 
 			timer += 1
-		end
+		--end
 	end
 end
 
@@ -153,14 +137,17 @@ function _draw()
 
 		--print("hi there!",cam.x+46,48,0)
 		if(debug_mode) then
-			rectfill(0,0,128,48,0)
-			rect(player.x-player.x%8,get_block_y(player.y+player.dy+8),player.x-player.x%8+8,get_block_y(player.y+player.dy+8)+8,8)
+			rectfill(cam.x,0,cam.x+128,48,0)
+			--rect(player.x-player.x%8,get_block_y(player.y+player.dy+8),player.x-player.x%8+8,get_block_y(player.y+player.dy+8)+8,8)
 			print("y = " .. tostr(player.y),cam.x,0,8)
 			print("dy = " .. tostr(player.dy),cam.x,8,8)
-			print("y + dy = " .. tostr(player.y + player.dy),cam.x,16,8)
-			print("y % 8 = " .. tostr(player.y % 8),cam.x,24,8)
-			print("block y = " .. tostr(b_y),cam.x,32,8)
-			print("falling = " .. tostr(player.is_falling),cam.x,40,8)
+			print("falling = " .. tostr(player.is_falling),cam.x,16,8)
+			print("jumping = " .. tostr(player.is_jumping),cam.x,24,8)
+			print("on ground = " .. tostr(player.is_on_ground),cam.x,32,8)
+			--print("y + dy = " .. tostr(player.y + player.dy),cam.x,16,8)
+			--print("y % 8 = " .. tostr(player.y % 8),cam.x,24,8)
+			--print("block y = " .. tostr(b_y),cam.x,32,8)
+			--print("falling = " .. tostr(player.is_falling),cam.x,40,8)
 			--print("hello", cam.x, 0, 8)
 		end
 	end
