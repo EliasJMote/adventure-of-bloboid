@@ -32,7 +32,7 @@ function player_controls(p)
 	if(btn(0) and p.x > 0) then
 		p.dx = -spd
 		p.dir = "left"
-	elseif(btn(1)) then
+	elseif(btn(1) and p.x < 128*8-8) then
 		p.dx = spd
 		p.dir = "right"
 	else
@@ -41,14 +41,14 @@ function player_controls(p)
 
 	-- player jump
 	--if(btnp(5) and not p.is_jumping and not p.is_falling) then
-	if(btnp(5) and p.is_on_ground) then
+	if(btnp(2) and p.is_on_ground) then
 		p.dy = -3.75
 		p.is_jumping = true
 		p.is_falling = false
 		p.is_on_ground = false
 	end
 
-	if(p.is_jumping and not btn(5)) then
+	if(p.is_jumping and not btn(2)) then
 		p.dy = 0
 		p.is_falling = true
 	end
