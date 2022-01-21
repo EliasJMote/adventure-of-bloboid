@@ -27,12 +27,13 @@ end
 -- player keyboard commands
 function player_controls(p)
 	local spd = 1
+	--local spd = 2
 
 	-- player horizontal movement
 	if(btn(0) and p.x > 0) then
 		p.dx = -spd
 		p.dir = "left"
-	elseif(btn(1) and p.x < 128*8-8) then
+	elseif(btn(1) and ((p.x < 128*8-8 and level ~= "castle_boss.p8") or (p.x < 120 and level == "castle_boss.p8"))) then
 		p.dx = spd
 		p.dir = "right"
 	else
@@ -48,9 +49,24 @@ function player_controls(p)
 		p.is_on_ground = false
 	end
 
-	if(p.is_jumping and not btn(2)) then
+	if(player.has_double_jump) then
+		if(btnp(2) and p.is_on_ground == false and p.is_falling and p.is_double_jumping == false) then
+			p.dy = -3.75
+			p.is_double_jumping = true
+			p.is_falling = false
+		end
+	end
+
+	if(p.is_jumping and not p.is_falling and not btn(2)) then
 		p.dy = 0
 		p.is_falling = true
+	end
+
+	if(player.has_double_jump) then
+		if(p.is_double_jumping and not p.is_falling and not btn(2)) then
+			p.dy = 0
+			p.is_falling = true
+		end
 	end
 
 	return p
@@ -62,13 +78,18 @@ function move_actor(act, is_solid)
 	-- check if the actor is on the ground
 	if not solid_area(act.x,act.y+act.dy+1,act.w,act.h) then
 		act.is_on_ground = false
-		--act.is_falling = true
 	elseif(act.dy >= 0) then
 		act.is_on_ground = true
+		act.is_double_jumping = false
 	end
 
 	if(act.dy >= 0 and act.dy <= 0.3 and act.is_jumping) then
 		act.is_jumping = false
+		act.is_falling = true
+	end
+
+	if(act.dy >= 0 and act.dy <= 0.3 and act.is_double_jumping) then
+		--act.is_double_jumping = false
 		act.is_falling = true
 	end
 

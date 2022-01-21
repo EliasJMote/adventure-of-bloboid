@@ -1,5 +1,5 @@
 pico-8 cartridge // http://www.pico-8.com
-version 32
+version 34
 __lua__
 #include physics.p8
 
@@ -22,19 +22,26 @@ function _init()
 	player.dx = 0
 	player.dy = 0
 	player.is_jumping = false
+	player.is_double_jumping = false
 	player.is_on_ground = true
 	player.is_falling = false
+	player.cur_health = 6
+	player.max_health = 6
+	player.has_double_jump = false
+	player.has_dash = false
 	
 	player.dir = "right"
 
 	cam = {x=0,y=0}
 	--cam = {x=0,y=128}
 
-	if(debug_mode) then
+	--[[if(debug_mode) then
 		state = "game"
+		reload(0x0,0x0,0x4300,level)
 	else
 		state = "logo"
-	end
+	end]]
+	state = "logo"
 
 	logo_timer = 120
 
@@ -45,8 +52,9 @@ function _init()
 	level = "forest.p8"
 	--level = "forest_2.p8"
 	--level = "castle.p8"
+	--level = "castle_boss.p8"
 
-	version = "0.2.0"
+	version = "0.3.0"
 
 	events = {}
 end
@@ -59,18 +67,30 @@ function _update()
 	if(state == "logo") then
 
 		if(timer >= logo_timer) then
-			state = "game"
-			reload(0x0,0x0,0x4300,level)
+			state = "title"
 		end
 
 		timer += 1
 
+	elseif(state == "title") then
+		if(btnp(4)) then
+			state = "story"
+		end
+
+	elseif(state == "story") then
+		if(btnp(4)) then
+			state = "instructions"
+		end
+
+	elseif(state == "instructions") then
+		if(btnp(4)) then
+			state = "game"
+			reload(0x0,0x0,0x4300,level)
+		end
+
 	elseif(state == "game") then
 
 		-- update the camera
-		--cam = {x=player.x-64,y=player.y-64}
-
-		-- 
 		if(player.x >= cam.x + 72) then
 			cam.x = player.x - 72
 		elseif(player.x <= cam.x + 56) then
@@ -95,6 +115,7 @@ function _update()
 				player.y = 128 + 112
 			else
 				if(level == "forest.p8") then
+
 					-- move from forest 1 to forest 2
 					reload(0x0,0x0,0x4300,"forest_2.p8")
 					level = "forest_2.p8"
@@ -103,6 +124,8 @@ function _update()
 					player.x = 16
 					player.y = 112
 				elseif(level == "castle.p8") then
+
+					-- move from castle to castle boss room
 					reload(0x0,0x0,0x4300,"castle_boss.p8")
 					level = "castle_boss.p8"
 					cam.x = 0
@@ -114,7 +137,7 @@ function _update()
 		end
 
 		-- move from forest 2 to castle
-		if(player.x >= 128*7+64 and player.y > 128 and level == "forest_2.p8") then
+		if(player.x >= 128*7 + 24 and player.y > 128 and level == "forest_2.p8") then
 			reload(0x0,0x0,0x4300,"castle.p8")
 			level = "castle.p8"
 			cam.x = 0
@@ -127,11 +150,34 @@ function _update()
 
 		--if(debug_mode and btnp(4) or not debug_mode) then
 
-			player = player_controls(player)
 
-			player = move_actor(player, true)
+		if(btnp(5) and player.x <= 16 and player.is_on_ground) then
 
-			timer += 1
+			-- go to crystal cave area
+			if(level ~= "castle_boss.p8") then
+				reload(0x0,0x0,0x4300,"castle_boss.p8")
+				level = "castle_boss.p8"
+				cam.x = 0
+				cam.y = 128
+				player.x = 4
+				player.y = 112 + 128
+
+			-- leave crystal cave and return to forest
+			else
+				reload(0x0,0x0,0x4300,"forest.p8")
+				level = "forest.p8"
+				cam.x = 0
+				cam.y = 0
+				player.x = 4
+				player.y = 112
+			end
+		end
+
+		player = player_controls(player)
+
+		player = move_actor(player, true)
+
+		timer += 1
 		--end
 	end
 end
@@ -163,6 +209,37 @@ function _draw()
 			end
 		end
 
+	elseif(state == "title") then
+		print("adventure of blobby", 0, 0, 7)
+		print("press z to continue", 0, 120, 7)
+		print("V" .. version, 104, 120, 7)
+
+	elseif(state == "story") then
+		print("story", 0, 0, 7)
+		print("blobby is enjoying a peaceful", 0, 16, 7)
+		print("day at home when he suddenly", 0, 24, 7)
+		print("notices a torrential storm", 0, 32, 7)
+		print("filled with twisters and", 0, 40, 7)
+		print("lightning nearby. at the center", 0, 48, 7)
+		print("of the storm, a floating castle", 0, 56, 7)
+		print("emerges.", 0, 64, 7)
+		print("blobby decides to venture to", 0, 80, 7)
+		print("the castle and try to find the", 0, 88, 7)
+		print("source of the strange weather.", 0, 96, 7)
+		print("press z to continue", 0, 120, 7)
+
+	elseif(state == "instructions") then
+		print("controls", 0, 0, 7)
+		print("left and right directional keys:", 0, 16, 7)
+		print("move left and right respectively", 0, 24, 7)
+		print("up key:", 0, 40, 7)
+		print("jump/double jump (if acquired)", 0, 48, 7)
+		print("z key:", 0, 64, 7)
+		print("shoot magic pellets", 0, 72, 7)
+		print("x key:", 0, 88, 7)
+		print("enter door/dash (if acquired)", 0, 96, 7)
+		print("press z to start", 0, 120, 7)
+
 	elseif(state == "game") then
 
 		camera(cam.x,cam.y)
@@ -177,6 +254,50 @@ function _draw()
 		end
 
 		map(0,0,0,0,128,16*2)
+
+		-- animate forest 2 (lamp posts)
+		if(level == "forest_2.p8" and player.y < 128) then
+			for i=0,5 do
+				spr(120+flr((timer+i)/4)%4, 128 * 7 - 16 + 16 * i, 88)
+			end
+		end
+
+		-- animate the crystal cave
+		if(level == "castle_boss.p8" and player.y > 128) then
+			for i=0,3 do
+				for j=0,1 do
+					spr(120+flr((timer+i)/2)%4, 56+j*8, 216+i*8)
+				end
+			end
+
+			-- animate the dash upgrade
+			spr(222+flr(timer/16)%2, 64 + 8 * 4, 216 - 32)
+
+		end
+
+		-- animate the castle
+		if(level == "castle.p8") then
+			local interval = 16
+			
+			if(player.y < 128) then
+				-- first area
+				for i=0,9 do
+					spr(131+flr(timer/interval)%2,64+104*i,64)
+				end
+				for i=0,9 do
+					spr(131+flr(timer/interval)%2,16+104*i,64)
+				end
+			else
+
+				-- second area
+				for i=0,7 do
+					spr(131+flr(timer/interval)%2,64+104*i,64+128)
+				end
+				for i=0,7 do
+					spr(131+flr(timer/interval)%2,16+104*i,64+128)
+				end
+			end
+		end
 
 		-- pet character
 		if(player.is_jumping or player.is_falling) then
@@ -199,7 +320,8 @@ function _draw()
 			print("dy = " .. tostr(player.dy),cam.x,8,8)
 			print("falling = " .. tostr(player.is_falling),cam.x,16,8)
 			print("jumping = " .. tostr(player.is_jumping),cam.x,24,8)
-			print("on ground = " .. tostr(player.is_on_ground),cam.x,32,8)
+			print("2x jumping = " .. tostr(player.is_double_jumping),cam.x,32,8)
+			print("on ground = " .. tostr(player.is_on_ground),cam.x,40,8)
 		end
 
 		-- status screen
